@@ -1,0 +1,27 @@
+# Create .gitignore in your root folder
+@"
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Build
+dist/
+build/
+
+# Misc
+.next/
+"@ | Out-File .gitignore -Encoding UTF8

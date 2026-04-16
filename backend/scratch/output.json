@@ -1,0 +1,242 @@
+{
+  "success": true,
+  "data": {
+    "nodes": [
+      {
+        "id": "1",
+        "type": "main",
+        "data": {
+          "label": "Introduction to Python",
+          "description": "Learn what Python is, its features, and why it's popular. Install Python and set up your development environment."
+        },
+        "position": {
+          "x": 250,
+          "y": 0
+        }
+      },
+      {
+        "id": "2",
+        "type": "main",
+        "data": {
+          "label": "Python Basics",
+          "description": "Understand variables, data types, operators, and basic input/output operations."
+        },
+        "position": {
+          "x": 250,
+          "y": 150
+        }
+      },
+      {
+        "id": "3",
+        "type": "main",
+        "data": {
+          "label": "Control Flow",
+          "description": "Learn about conditional statements (if-else) and loops (for, while)."
+        },
+        "position": {
+          "x": 250,
+          "y": 300
+        }
+      },
+      {
+        "id": "4",
+        "type": "main",
+        "data": {
+          "label": "Functions",
+          "description": "Understand how to define and call functions, parameters, return values, and scope."
+        },
+        "position": {
+          "x": 250,
+          "y": 450
+        }
+      },
+      {
+        "id": "5",
+        "type": "main",
+        "data": {
+          "label": "Data Structures",
+          "description": "Learn lists, tuples, dictionaries, and sets with their common operations."
+        },
+        "position": {
+          "x": 250,
+          "y": 600
+        }
+      },
+      {
+        "id": "6",
+        "type": "main",
+        "data": {
+          "label": "Modules and Packages",
+          "description": "Understand how to import and use modules, and explore the Python Standard Library."
+        },
+        "position": {
+          "x": 250,
+          "y": 750
+        }
+      },
+      {
+        "id": "7",
+        "type": "main",
+        "data": {
+          "label": "File Handling",
+          "description": "Learn to read from and write to files in Python."
+        },
+        "position": {
+          "x": 250,
+          "y": 900
+        }
+      },
+      {
+        "id": "8",
+        "type": "main",
+        "data": {
+          "label": "Error Handling",
+          "description": "Understand exceptions, try-except blocks, and raising exceptions."
+        },
+        "position": {
+          "x": 250,
+          "y": 1050
+        }
+      },
+      {
+        "id": "9",
+        "type": "main",
+        "data": {
+          "label": "Object-Oriented Programming (OOP)",
+          "description": "Learn classes, objects, inheritance, polymorphism, and encapsulation."
+        },
+        "position": {
+          "x": 250,
+          "y": 1200
+        }
+      },
+      {
+        "id": "10",
+        "type": "side",
+        "data": {
+          "label": "Practice Exercises",
+          "description": "Apply your knowledge with beginner-friendly coding exercises and small projects."
+        },
+        "position": {
+          "x": 50,
+          "y": 150
+        }
+      },
+      {
+        "id": "11",
+        "type": "side",
+        "data": {
+          "label": "Python Community",
+          "description": "Join Python communities, forums, and attend local meetups to learn and network."
+        },
+        "position": {
+          "x": 450,
+          "y": 150
+        }
+      },
+      {
+        "id": "12",
+        "type": "side",
+        "data": {
+          "label": "Version Control with Git",
+          "description": "Learn Git basics to manage your Python projects and collaborate with others."
+        },
+        "position": {
+          "x": 50,
+          "y": 450
+        }
+      },
+      {
+        "id": "13",
+        "type": "side",
+        "data": {
+          "label": "Debugging Tools",
+          "description": "Explore Python debugging tools like pdb and IDE debuggers to troubleshoot code."
+        },
+        "position": {
+          "x": 450,
+          "y": 450
+        }
+      },
+      {
+        "id": "14",
+        "type": "main",
+        "data": {
+          "label": "Next Steps",
+          "description": "Explore web development (Flask/Django), data science (Pandas, NumPy), or automation scripts."
+        },
+        "position": {
+          "x": 250,
+          "y": 1350
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1-2",
+        "source": "1",
+        "target": "2"
+      },
+      {
+        "id": "e2-3",
+        "source": "2",
+        "target": "3"
+      },
+      {
+        "id": "e3-4",
+        "source": "3",
+        "target": "4"
+      },
+      {
+        "id": "e4-5",
+        "source": "4",
+        "target": "5"
+      },
+      {
+        "id": "e5-6",
+        "source": "5",
+        "target": "6"
+      },
+      {
+        "id": "e6-7",
+        "source": "6",
+        "target": "7"
+      },
+      {
+        "id": "e7-8",
+        "source": "7",
+        "target": "8"
+      },
+      {
+        "id": "e8-9",
+        "source": "8",
+        "target": "9"
+      },
+      {
+        "id": "e9-14",
+        "source": "9",
+        "target": "14"
+      },
+      {
+        "id": "e2-10",
+        "source": "2",
+        "target": "10"
+      },
+      {
+        "id": "e2-11",
+        "source": "2",
+        "target": "11"
+      },
+      {
+        "id": "e4-12",
+        "source": "4",
+        "target": "12"
+      },
+      {
+        "id": "e4-13",
+        "source": "4",
+        "target": "13"
+      }
+    ]
+  }
+}
