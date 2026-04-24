@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Life Agent — AI Planning & Roadmaps",
-  description: "Your personal AI planning assistant for career roadmaps, learning plans, and goal tracking.",
+  title: "Life Agent — AI Adaptive Planning",
+  description: "Your personal AI planning assistant for adaptive goal tracking, daily tasks, and smart plans.",
 };
 
 export default function RootLayout({

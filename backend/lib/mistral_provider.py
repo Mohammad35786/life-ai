@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 import re
 from typing import Any
 
 from backend.config import settings
 
+logger = logging.getLogger(__name__)
 
-__all__ = ["MistralProviderError", "sendChat", "sendChatGuided", "testConnection"]
+
+__all__ = ["MistralProviderError", "sendChat", "sendChatGuided", "asendChat", "asendChatGuided", "testConnection"]
 
 
 class MistralProviderError(Exception):
@@ -15,6 +19,10 @@ class MistralProviderError(Exception):
 
 
 def _get_client():
+    """Return a cached Mistral client singleton."""
+    global _mistral_client
+    if _mistral_client is not None:
+        return _mistral_client
     try:
         from mistralai.client import Mistral
     except ImportError as e:
@@ -25,67 +33,75 @@ def _get_client():
     if not settings.mistral_api_key:
         raise MistralProviderError("MISTRAL_API_KEY is missing.")
 
-    return Mistral(api_key=settings.mistral_api_key)
+    _mistral_client = Mistral(api_key=settings.mistral_api_key)
+    return _mistral_client
 
 
-def sendChat(messages: list[dict[str, Any]]) -> str:
+_mistral_client = None
+
+
+def sendChat(messages: list[dict[str, Any]], system: str | None = None) -> str:
     """Send a chat to Mistral and return the assistant's text."""
-
-    print(f"[mistral_provider] api_key_loaded={bool(settings.mistral_api_key)}")
-    print(f"[mistral_provider] model={settings.mistral_model}")
-    print(f"[mistral_provider] messages={messages}")
-
     client = _get_client()
 
+    # Prepend system message if provided and not already present
+    final_messages = list(messages)
+    if system:
+        has_system = any(m.get("role") == "system" for m in final_messages)
+        if not has_system:
+            final_messages.insert(0, {"role": "system", "content": system})
+
     try:
+        logger.debug("sendChat: model=%s msg_count=%d", settings.mistral_model, len(final_messages))
         response = client.chat.complete(
             model=settings.mistral_model,
-            messages=messages,
+            messages=final_messages,
         )
         return response.choices[0].message.content
     except Exception as e:
         status = getattr(getattr(e, "response", None), "status_code", None)
         body = getattr(getattr(e, "response", None), "text", None)
-        print(f"[mistral_provider] error_type={type(e).__name__} status={status} body={body}")
+        logger.error("sendChat error: type=%s status=%s body=%s", type(e).__name__, status, body)
         raise MistralProviderError(f"Mistral call failed: {str(e)}") from e
 
 
+async def asendChat(messages: list[dict[str, Any]], system: str | None = None) -> str:
+    """Async wrapper — runs sendChat in a thread so it doesn't block the event loop."""
+    return await asyncio.to_thread(sendChat, messages, system)
+
+
 def sendChatGuided(user_message: str, route_type: str, system_prompt: str) -> str:
-    """Send a guided chat to Mistral with structured system prompt and return the assistant's text.
-    
-    Args:
-        user_message: The user's question from the guided panel
-        route_type: The type of response expected (career, job, learn, test, general)
-        system_prompt: The system prompt to use
-    """
-    
-    print(f"[mistral_provider] guided: route_type={route_type}")
-    print(f"[mistral_provider] guided: user_message={user_message}")
-    
+    """Send a guided chat to Mistral with structured system prompt and return the assistant's text."""
     client = _get_client()
-    
+
     # Build messages with system prompt and user message
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_message}
     ]
-    
+
     try:
+        logger.debug("sendChatGuided: route=%s", route_type)
         response = client.chat.complete(
             model=settings.mistral_model,
             messages=messages,
         )
         raw_reply = response.choices[0].message.content
-        
+
         # Try to extract and format JSON if present
         formatted_reply = _format_guided_response(raw_reply, route_type)
         return formatted_reply
-        
+
     except Exception as e:
         status = getattr(getattr(e, "response", None), "status_code", None)
         body = getattr(getattr(e, "response", None), "text", None)
-        print(f"[mistral_provider] guided error_type={type(e).__name__} status={status} body={body}")
+        logger.error("sendChatGuided error: type=%s status=%s body=%s", type(e).__name__, status, body)
         raise MistralProviderError(f"Mistral guided call failed: {str(e)}") from e
+
+
+async def asendChatGuided(user_message: str, route_type: str, system_prompt: str) -> str:
+    """Async wrapper — runs sendChatGuided in a thread so it doesn't block the event loop."""
+    return await asyncio.to_thread(sendChatGuided, user_message, route_type, system_prompt)
 
 
 def _format_guided_response(raw_reply: str, route_type: str) -> str:

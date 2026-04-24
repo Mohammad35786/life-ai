@@ -1,8 +1,13 @@
 import json
+import logging
+import time
 import urllib.request
 import urllib.error
+import urllib.parse
 from typing import Any
 from backend.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class SupabaseREST:
@@ -28,22 +33,35 @@ class SupabaseREST:
     ) -> list[dict] | None:
         url = f"{self.api_url}/{table}"
         if params:
-            query = "&".join(f"{k}={v}" for k, v in params.items())
+            # Proper URL encoding to prevent 400 errors from special characters in filters (e.g. parentheses)
+            query = "&".join(f"{urllib.parse.quote(k)}={urllib.parse.quote(v)}" for k, v in params.items())
             url = f"{url}?{query}"
         data = json.dumps(body).encode("utf-8") if body else None
         headers = dict(self.headers)
         if extra_headers:
             headers.update(extra_headers)
         req = urllib.request.Request(url, data=data, headers=headers, method=method)
-        try:
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                raw = resp.read().decode("utf-8")
-                if not raw.strip():
-                    return None
-                return json.loads(raw)
-        except urllib.error.HTTPError as e:
-            err = e.read().decode("utf-8")
-            raise RuntimeError(f"Supabase REST error ({e.code}): {err}") from e
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    raw = resp.read().decode("utf-8")
+                    if not raw.strip():
+                        return None
+                    return json.loads(raw)
+            except urllib.error.HTTPError as e:
+                err_body = e.read().decode("utf-8")
+                raise RuntimeError(f"Supabase REST error ({e.code}) on {method} {table}: {err_body}") from e
+            except (urllib.error.URLError, TimeoutError, OSError) as e:
+                if attempt < max_retries - 1:
+                    wait = 0.5 * (attempt + 1)
+                    logger.warning("Supabase %s %s timeout/conn error (attempt %d), retrying in %.1fs: %s", method, table, attempt + 1, wait, e)
+                    time.sleep(wait)
+                    continue
+                raise RuntimeError(f"Supabase connection error on {method} {table}: {str(e)}") from e
+            except Exception as e:
+                raise RuntimeError(f"Supabase connection error on {method} {table}: {str(e)}") from e
+        return None  # unreachable but satisfies type checker
 
     def table(self, name: str):
         return _TableHandle(self, name)
@@ -81,6 +99,28 @@ class _TableHandle:
         self._filters[col] = f"eq.{val}"
         return self
 
+    def in_(self, col: str, vals: list[str]) -> "_TableHandle":
+        """PostgREST 'in' filter: col=in.(val1,val2,val3)"""
+        joined = ",".join(str(v) for v in vals)
+        self._filters[col] = f"in.({joined})"
+        return self
+
+    def lte(self, col: str, val: str) -> "_TableHandle":
+        self._filters[col] = f"lte.{val}"
+        return self
+
+    def gte(self, col: str, val: str) -> "_TableHandle":
+        self._filters[col] = f"gte.{val}"
+        return self
+
+    def order(self, col: str, desc: bool = False) -> "_TableHandle":
+        self._order = f"{col}.{'desc' if desc else 'asc'}"
+        return self
+
+    def limit(self, count: int) -> "_TableHandle":
+        self._limit = count
+        return self
+
     def update(self, body: dict) -> "_TableHandle":
         self._method = "PATCH"
         self._body = body
@@ -94,6 +134,10 @@ class _TableHandle:
         params = dict(self._filters)
         if hasattr(self, "_select_cols"):
             params["select"] = self._select_cols
+        if hasattr(self, "_order"):
+            params["order"] = self._order
+        if hasattr(self, "_limit"):
+            params["limit"] = str(self._limit)
         result = self._client._request(
             method=getattr(self, "_method", "GET"),
             table=self._name,
@@ -103,10 +147,22 @@ class _TableHandle:
         )
         # Return shape compatible with old supabase SDK: [count, data]
         data = result if result else []
+        # Reset state so the handle can be safely reused for a new query
+        self._filters = {}
+        self._extra_headers = {}
+        for attr in ("_method", "_body", "_select_cols", "_order", "_limit"):
+            self.__dict__.pop(attr, None)
         return [None, data]
 
 
+_cached_supabase_client: SupabaseREST | None = None
+
+
 def get_supabase_client() -> SupabaseREST | None:
+    global _cached_supabase_client
+    if _cached_supabase_client is not None:
+        return _cached_supabase_client
     if not settings.supabase_url or not settings.supabase_service_role_key:
         return None
-    return SupabaseREST(settings.supabase_url, settings.supabase_service_role_key)
+    _cached_supabase_client = SupabaseREST(settings.supabase_url, settings.supabase_service_role_key)
+    return _cached_supabase_client

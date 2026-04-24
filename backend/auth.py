@@ -79,3 +79,9 @@ def get_current_user(
             detail=f"Invalid token: {exc}. Header: {header_info}",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token payload (missing or invalid 'sub'): {exc}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

@@ -8,7 +8,7 @@
 
 import { supabase } from "./supabase";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+const API_BASE = "";  // Use Next.js rewrite proxy — no CORS issues
 
 async function getAccessToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();

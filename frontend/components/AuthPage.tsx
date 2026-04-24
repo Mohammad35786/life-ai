@@ -79,8 +79,8 @@ export function AuthPage() {
         </h1>
         <p style={styles.subheading}>
           {mode === "signin"
-            ? "Sign in to access your roadmaps and conversations."
-            : "Start building your personal roadmap to success."}
+            ? "Sign in to access your plans and conversations."
+            : "Start building your personal plan to success."}
         </p>
 
         {/* Social login buttons */}
